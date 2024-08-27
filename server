@@ -1,0 +1,62 @@
+import socket
+
+def create_server_socket(host, port):
+    s = socket.socket()
+    try:
+        s.bind((host, port))
+        s.listen(1)
+        print(f'Server will start on host: {host}')
+        print('Waiting for a connection...')
+        return s
+    except socket.error as e:
+        print(f"Failed to bind or listen on {host}:{port}. Error: {e}")
+        return None
+
+def accept_connections(s):
+    try:
+        conn, addr = s.accept()
+        print(f"{addr} has connected to the server.")
+        return conn, addr
+    except socket.error as e:
+        print("Failed to accept a connection.")
+        print(f"Error: {e}")
+        return None, None
+
+def send_message(conn):
+    message = input('>> ')
+    if message.lower() == 'exit':
+        print('Server is shutting down.')
+        conn.close()
+        return False
+    try:
+        conn.send(message.encode())
+        print('Message sent.')
+    except socket.error as e:
+        print("Failed to send message.")
+        print(f"Error: {e}")
+        return False
+    return True
+
+def receive_message(conn, buffer_size=1024):
+    try:
+        incoming_message = conn.recv(buffer_size).decode()
+        print('Client:', incoming_message)
+    except socket.error as e:
+        print("Failed to receive message.")
+        print(f"Error: {e}")
+
+def main():
+    host = socket.gethostname()
+    port = 8080
+    server_socket = create_server_socket(host, port)
+    
+    if server_socket:
+        conn, addr = accept_connections(server_socket)
+        if conn:
+            while True:
+                if not send_message(conn):
+                    break
+                receive_message(conn)
+
+if __name__ == '__main__':
+    main()
